@@ -1,0 +1,13 @@
+{
+  "name": "aws-iot-simulator",
+  "version": "1.0.0",
+  "description": "Minimal script to mock vehicle telemetry to AWS IoT Core",
+  "main": "simulator.js",
+  "scripts": {
+    "start": "node simulator.js"
+  },
+  "dependencies": {
+    "aws-iot-device-sdk": "^2.2.13",
+    "socket.io-client": "^4.8.3"
+  }
+}

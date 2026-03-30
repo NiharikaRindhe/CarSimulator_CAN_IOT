@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cockpit Grid Tool</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; overflow:hidden; font-family:'Segoe UI',sans-serif; }
+  #wrap { position:relative; width:100vw; height:100vh; }
+  #wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* Grid overlay */
+  .grid {
+    position:absolute; inset:0;
+    display:grid;
+    grid-template-columns: repeat(20, 1fr);
+    grid-template-rows: repeat(12, 1fr);
+    pointer-events:none;
+  }
+  .cell {
+    border:1px solid rgba(0,255,136,0.25);
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:rgba(0,255,136,0.6);
+    font-family:'Courier New',monospace;
+    pointer-events:auto;
+    cursor:crosshair;
+    transition: background 0.1s;
+  }
+  .cell:hover { background:rgba(0,255,136,0.15); }
+  .cell.selected { background:rgba(255,136,0,0.3); border-color:rgba(255,136,0,0.7); color:#ff8800; }
+
+  /* Cursor position display */
+  #info {
+    position:fixed; top:8px; left:8px; z-index:100;
+    background:rgba(0,0,0,0.85); color:#0f0; padding:8px 14px;
+    border-radius:8px; font-family:'Courier New',monospace; font-size:13px;
+    border:1px solid rgba(0,255,136,0.3);
+    pointer-events:none;
+  }
+  #info span { color:#ff8800; }
+
+  /* Axis labels */
+  .col-labels, .row-labels { position:absolute; z-index:50; }
+  .col-labels {
+    top:0; left:0; right:0; height:18px;
+    display:grid; grid-template-columns:repeat(20,1fr);
+  }
+  .row-labels {
+    top:0; bottom:0; left:0; width:22px;
+    display:grid; grid-template-rows:repeat(12,1fr);
+  }
+  .col-labels div, .row-labels div {
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-family:'Courier New',monospace;
+    color:rgba(0,200,255,0.7); background:rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <img src="/static/cockpit_bg.png" alt="cockpit" draggable="false"/>
+  
+  <!-- Column labels -->
+  <div class="col-labels" id="col-labels"></div>
+  <!-- Row labels -->
+  <div class="row-labels" id="row-labels"></div>
+  <!-- Grid cells -->
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="info">
+  Grid: <span id="pos">—</span> | 
+  Pixel: <span id="px">—</span> | 
+  CSS: <span id="css">—</span>
+</div>
+
+<script>
+const COLS = 20, ROWS = 12;
+const grid = document.getElementById('grid');
+const colLabels = document.getElementById('col-labels');
+const rowLabels = document.getElementById('row-labels');
+
+// Create column labels (A-T)
+for (let c = 0; c < COLS; c++) {
+  const d = document.createElement('div');
+  d.textContent = String.fromCharCode(65 + c);
+  colLabels.appendChild(d);
+}
+// Create row labels (1-12)
+for (let r = 0; r < ROWS; r++) {
+  const d = document.createElement('div');
+  d.textContent = r + 1;
+  rowLabels.appendChild(d);
+}
+// Create grid cells
+for (let r = 0; r < ROWS; r++) {
+  for (let c = 0; c < COLS; c++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const label = String.fromCharCode(65 + c) + (r + 1);
+    cell.textContent = label;
+    cell.dataset.col = c;
+    cell.dataset.row = r;
+    cell.addEventListener('click', () => cell.classList.toggle('selected'));
+    cell.addEventListener('mouseenter', () => {
+      const rect = cell.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      document.getElementById('pos').textContent = label;
+      document.getElementById('px').textContent = `${Math.round(cx)}, ${Math.round(cy)}`;
+      // CSS percentages
+      const pctL = ((c / COLS) * 100).toFixed(1);
+      const pctT = ((r / ROWS) * 100).toFixed(1);
+      const pctR = (100 - ((c + 1) / COLS) * 100).toFixed(1);
+      const pctB = (100 - ((r + 1) / ROWS) * 100).toFixed(1);
+      document.getElementById('css').textContent = `left:${pctL}% top:${pctT}% | right:${pctR}% bottom:${pctB}%`;
+    });
+    grid.appendChild(cell);
+  }
+}
+</script>
+</body>
+</html>

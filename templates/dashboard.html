@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADAS Cockpit Simulator</title>
+<link rel="stylesheet" href="/static/styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<!-- COCKPIT BACKGROUND -->
+<div class="cockpit-bg">
+  <img src="/static/cockpit_bg.png" alt="cockpit" class="cockpit-img" draggable="false"/>
+</div>
+
+<!-- 9. BSM LEFT — B5 -->
+<div class="bsm bsm-left" id="bsm-left" onclick="toggleBSM('left')" title="BSM Left (3)">
+  <div class="bsm-ring"></div>
+  <span class="bsm-label">BSM</span>
+</div>
+
+<!-- 9. BSM RIGHT — S5 -->
+<div class="bsm bsm-right" id="bsm-right" onclick="toggleBSM('right')" title="BSM Right (4)">
+  <div class="bsm-ring"></div>
+  <span class="bsm-label">BSM</span>
+</div>
+
+<!-- 8. LEFT INDICATOR — L4 -->
+<div class="indicator ind-left" id="blink-l" onclick="toggleBlinker('left')" title="Left Indicator (Q)">
+  <svg viewBox="0 0 50 36"><polygon points="4,18 22,4 22,32"/><rect x="26" y="14" width="20" height="8" rx="2"/></svg>
+</div>
+
+<!-- 8. RIGHT INDICATOR — P4 -->
+<div class="indicator ind-right" id="blink-r" onclick="toggleBlinker('right')" title="Right Indicator (E)">
+  <svg viewBox="0 0 50 36"><polygon points="46,18 28,4 28,32"/><rect x="4" y="14" width="20" height="8" rx="2"/></svg>
+</div>
+
+<!-- 7. INSTRUMENT CLUSTER — Premium dual gauges -->
+<div class="gauges-container" id="gauges-container">
+  <!-- SPEEDOMETER (left) -->
+  <div class="gauge-wrap" id="speedo-wrap">
+    <canvas id="speedo-canvas" width="300" height="300"></canvas>
+    <div class="gauge-center">
+      <span class="gauge-val" id="speed-num">0</span>
+      <span class="gauge-unit">km/h</span>
+    </div>
+  </div>
+  <!-- RPM (right) -->
+  <div class="gauge-wrap" id="rpm-wrap">
+    <canvas id="rpm-canvas" width="300" height="300"></canvas>
+    <div class="gauge-center">
+      <span class="gauge-val" id="rpm-num">800</span>
+      <span class="gauge-unit">RPM</span>
+    </div>
+  </div>
+</div>
+
+<!-- 1. STEERING WHEEL — center N8, spans M7–O9 -->
+<div class="steering-area" id="steering-area">
+  <img src="/static/steering_wheel.png" alt="steering" class="steering-img" id="steering-wheel" draggable="false"/>
+</div>
+
+<!-- STEERING ANGLE — E10, F10, G10 -->
+<div class="steer-angle" id="steer-angle">
+  <span id="steer-angle-text">+0.0°</span>
+</div>
+
+<!-- 2. ACCELERATOR BAR — N11, N12 -->
+<div class="pedal-wrapper accel-wrapper">
+  <div class="pedal-box" id="gas-pedal" onmousedown="pedalDown('gas')" onmouseup="pedalUp('gas')" ontouchstart="pedalDown('gas')" ontouchend="pedalUp('gas')" title="Gas (W)">
+    <div class="pedal-track"><div class="pedal-fill gas-fill" id="pedal-gas"></div></div>
+    <span class="pedal-lbl gas-lbl">GAS</span>
+  </div>
+</div>
+
+<!-- 2. BRAKE BAR — P11, P12 -->
+<div class="pedal-wrapper brake-wrapper">
+  <div class="pedal-box" id="brake-pedal" onmousedown="pedalDown('brake')" onmouseup="pedalUp('brake')" ontouchstart="pedalDown('brake')" ontouchend="pedalUp('brake')" title="Brake (S)">
+    <div class="pedal-track"><div class="pedal-fill brake-fill" id="pedal-brake"></div></div>
+    <span class="pedal-lbl brake-lbl">BRK</span>
+  </div>
+</div>
+
+<!-- E-BRAKE removed -->
+
+<!-- 3. GEAR SELECTOR P N R D — I8, J8, K8 -->
+<div class="gear-bar" id="gear-bar">
+  <div class="gear-letter" id="g-P" data-g="P" onclick="setGear(0)">P</div>
+  <div class="gear-letter" id="g-N" data-g="N" onclick="setGear(2)">N</div>
+  <div class="gear-letter" id="g-R" data-g="R" onclick="setGear(1)">R</div>
+  <div class="gear-letter active" id="g-D" data-g="D" onclick="setGear(3)">D</div>
+</div>
+
+<!-- 5. SEATBELT ON/OFF — F6 -->
+<div class="belt-control" id="belt-control" onclick="toggleSeatbelt()" title="Seatbelt (2)">
+  <img src="/static/seatbelt_icon.png" alt="seatbelt" class="belt-icon" id="belt-icon"/>
+  <span class="belt-label" id="belt-val">ON</span>
+</div>
+
+<!-- 4. CAR DOOR LOCK/UNLOCK — G6 -->
+<div class="door-control" id="door-control" onclick="toggleDoor()" title="Door Lock/Unlock (1)">
+  <img src="/static/door_icon.png" alt="door" class="door-icon" id="door-icon"/>
+  <span class="door-label" id="door-val">LOCKED</span>
+</div>
+
+<!-- 6. MUSIC PLAYER — I5, J5, K5, I6, J6, K6 -->
+<div class="music-player" id="music-player">
+  <div class="mp-top-row">
+    <button class="mp-play" id="play-btn" onclick="toggleMusic()" title="Music (M)">
+      <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg>
+      <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>
+    </button>
+    <div class="mp-info">
+      <div class="mp-title" id="music-track">Synthwave Drive</div>
+      <div class="mp-progress"><div class="mp-bar"></div></div>
+    </div>
+  </div>
+  <div class="mp-viz" id="viz">
+    <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
+    <span class="vbar"></span><span class="vbar"></span>
+  </div>
+  <input type="range" class="mp-vol" id="vol-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
+</div>
+
+<!-- CAN Status — A12, B12, C12 -->
+<div class="can-strip">
+  <div class="can-dot" id="can-dot"></div>
+  <span id="can-text">CAN: INIT</span>
+  <span class="mps"><span id="mps-val">0</span> msg/s</span>
+  <button class="can-info-btn" id="can-info-btn" onclick="toggleCanPopup()" title="CAN Info">ℹ</button>
+</div>
+
+<!-- CAN INFO POPUP -->
+<div class="can-popup-overlay" id="can-popup-overlay" onclick="closeCanPopup(event)">
+  <div class="can-popup" onclick="event.stopPropagation()">
+    <button class="can-popup-close" onclick="toggleCanPopup()">✕</button>
+    <h3>CAN Bus Data</h3>
+    <p style="color:rgba(255,255,255,0.6); font-size:12px; margin-bottom:12px;">
+      The following signals are transmitted over the CAN bus from this cockpit simulator. Each control maps to a specific CAN signal.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Signal</th><th>Key</th><th>CAN ID</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Steering Angle</td><td>A / D</td><td>0x010</td><td>-540° to +540° wheel angle</td></tr>
+        <tr><td>Throttle</td><td>W</td><td>0x020</td><td>0–100% accelerator position</td></tr>
+        <tr><td>Brake</td><td>S</td><td>0x021</td><td>0–100% brake pressure</td></tr>
+        <tr><td>Gear</td><td>P/N/R/G</td><td>0x030</td><td>P=0, R=1, N=2, D=3</td></tr>
+        <tr><td>Door Lock</td><td>1</td><td>0x040</td><td>Locked / Unlocked</td></tr>
+        <tr><td>Seatbelt</td><td>2</td><td>0x041</td><td>On / Off</td></tr>
+        <tr><td>Left Indicator</td><td>Q</td><td>0x050</td><td>Blinker on/off</td></tr>
+        <tr><td>Right Indicator</td><td>E</td><td>0x051</td><td>Blinker on/off</td></tr>
+        <tr><td>BSM Left</td><td>3</td><td>0x060</td><td>Blind spot warning</td></tr>
+        <tr><td>BSM Right</td><td>4</td><td>0x061</td><td>Blind spot warning</td></tr>
+        <tr><td>E-Brake</td><td>Space</td><td>0x022</td><td>Emergency brake</td></tr>
+        <tr><td>Speed</td><td>—</td><td>0x011</td><td>Current vehicle speed km/h</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Demo banner -->
+<div class="demo-banner" id="demo-banner">⚠ DEMO MODE — CAN bus unavailable</div>
+
+<!-- Hidden audio fallback -->
+<audio id="audio" loop><source src="/static/music/song1.mp3" type="audio/mpeg"></audio>
+
+<script src="/static/script.js"></script>
+</body>
+</html>

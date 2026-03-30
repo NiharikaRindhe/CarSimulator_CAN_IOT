@@ -1,0 +1,653 @@
+/* ═══════════════════════════════════════════════════════════════
+   ADAS COCKPIT SIMULATOR — Grid-Based Dashboard CSS
+   Grid: 20 columns (A–T) × 12 rows (1–12)
+   Each cell = 5% width × 8.33% height
+   Column: A=0%, B=5%, C=10%,…, N=65%, O=70%, P=75%,…, T=95%
+   Row:    1=0%, 2=8.33%, 3=16.67%,…, 8=58.33%, 9=66.67%,…, 12=91.67%
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+:root {
+  --cyan: #00d4ff;
+  --orange: #ff8800;
+  --red: #ff3344;
+  --green: #00ff88;
+  --amber: #ffcc00;
+  --text: #fff;
+  --dim: rgba(255,255,255,0.5);
+  --ff-d: 'Orbitron', monospace;
+  --ff-m: 'Share Tech Mono', monospace;
+  --ff-u: 'Rajdhani', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--text);
+  font-family: var(--ff-u);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ══ COCKPIT BACKGROUND ══════════════════════════════════════════ */
+.cockpit-bg {
+  position: fixed; inset: 0; z-index: 0;
+}
+.cockpit-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ══ 9. BSM — B5 (left) and S5 (right) ══════════════════════════ */
+/* B=5%, row5 = 33.33% */
+.bsm {
+  position: fixed;
+  width: 5%; height: 8.33%;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.bsm-left  { left: 5%;  top: 33.33%; }
+.bsm-right { left: 90%; top: 33.33%; }
+
+.bsm-ring {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.15);
+  transition: all 0.3s;
+}
+.bsm-label {
+  font-family: var(--ff-d);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  transition: color 0.3s;
+}
+.bsm:hover .bsm-ring { border-color: rgba(255,255,255,0.35); }
+.bsm.active .bsm-ring {
+  border-color: var(--red);
+  background: rgba(255,51,68,0.15);
+  box-shadow: 0 0 20px rgba(255,51,68,0.4), inset 0 0 10px rgba(255,51,68,0.2);
+  animation: bsm-pulse 1.5s ease-in-out infinite;
+}
+.bsm.active .bsm-label { color: var(--red); }
+@keyframes bsm-pulse {
+  0%,100%{ box-shadow: 0 0 20px rgba(255,51,68,0.4); }
+  50%{ box-shadow: 0 0 35px rgba(255,51,68,0.7); }
+}
+
+/* ══ 8. INDICATORS — L4 (left) and P4 (right) ═══════════════════ */
+/* L=55%, P=75%, row4=25% */
+.indicator {
+  position: fixed;
+  width: 5%; height: 8.33%;
+  z-index: 30;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.indicator svg {
+  width: 70%; height: 70%;
+  fill: rgba(255,255,255,0.15);
+  transition: fill 0.2s;
+}
+.indicator:hover svg { fill: rgba(255,255,255,0.35); }
+
+.ind-left  { left: 57%; top: 32%; }
+.ind-right { left: 73%; top: 32%; }
+
+.indicator.on svg {
+  fill: var(--amber);
+  filter: drop-shadow(0 0 14px rgba(255,204,0,0.6));
+  animation: blink-flash 0.6s step-end infinite;
+}
+@keyframes blink-flash { 0%,100%{opacity:1} 50%{opacity:0.08} }
+
+/* ══ 7. INSTRUMENT CLUSTER — Canvas Gauges ══════════════════════ */
+.gauges-container {
+  position: fixed;
+  left: 58%;
+  top: 40%;
+  width: 16%;
+  height: 13%;
+  z-index: 25;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5%;
+}
+.gauge-wrap {
+  position: relative;
+  width: 48%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-wrap canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.gauge-center {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+.gauge-val {
+  font-family: var(--ff-d);
+  font-size: clamp(14px, 1.6vw, 28px);
+  font-weight: 900;
+  line-height: 1;
+  display: block;
+  transition: color 0.3s, text-shadow 0.3s;
+  color: var(--green);
+  text-shadow: 0 0 15px rgba(0,255,136,0.5);
+}
+.gauge-val.green  { color: var(--green);  text-shadow: 0 0 15px rgba(0,255,136,0.5); }
+.gauge-val.yellow { color: var(--amber);  text-shadow: 0 0 15px rgba(255,204,0,0.5); }
+.gauge-val.orange { color: var(--orange); text-shadow: 0 0 15px rgba(255,136,0,0.5); }
+.gauge-val.red    { color: var(--red);    text-shadow: 0 0 15px rgba(255,51,68,0.5); }
+.gauge-unit {
+  font-family: var(--ff-m);
+  font-size: clamp(7px, 0.7vw, 11px);
+  color: var(--dim);
+  display: block;
+  margin-top: 2px;
+}
+
+/* ══ 1. STEERING WHEEL — Center N8, spans M7–O9 (3x3) ══════════ */
+/* M=60%, row7=50%, spans 3 cols (15%) × 3 rows (25%) */
+.steering-area {
+  position: fixed;
+  left: 60%;
+  top: 50%;
+  width: 15%;
+  height: 25%;
+  z-index: 20;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.steering-area:active { cursor: grabbing; }
+.steering-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  transition: transform 0.06s linear;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.6));
+  pointer-events: none;
+}
+
+/* ══ STEERING ANGLE — E10, F10, G10 (3×1) ═══════════════════════ */
+/* E=20%, row10=75% */
+.steer-angle {
+  position: fixed;
+  left: 20%;
+  top: 75%;
+  width: 15%;
+  height: 8.33%;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-m);
+  font-size: clamp(12px, 1.2vw, 18px);
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0,212,255,0.4);
+  letter-spacing: 1px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+}
+
+/* ══ 2. PEDALS — Accelerator N11–N12, Brake P11–P12 ═════════════ */
+/* Accelerator: N=65%, row11=83.33%, spans 1 col × 2 rows (16.67%) */
+/* Brake: P=75%, row11=83.33% */
+.pedals {
+  position: fixed;
+  z-index: 25;
+  display: flex;
+  gap: 0;
+}
+.pedal-wrapper {
+  position: fixed;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.accel-wrapper {
+  left: 68%;
+  top: 83.33%;
+  width: 5%;
+  height: 16.67%;
+}
+.brake-wrapper {
+  left: 72%;
+  top: 83.33%;
+  width: 5%;
+  height: 16.67%;
+}
+.pedal-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+.pedal-track {
+  width: 32px; height: 70px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s;
+}
+.pedal-box:hover .pedal-track { border-color: rgba(255,255,255,0.3); }
+.pedal-fill { width: 100%; transition: height 0.08s; }
+.brake-fill { background: var(--red); box-shadow: 0 0 8px rgba(255,51,68,0.4); height: 0%; }
+.gas-fill   { background: var(--green); box-shadow: 0 0 8px rgba(0,255,136,0.4); height: 0%; }
+.pedal-lbl {
+  font-family: var(--ff-d);
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+.brake-lbl { color: var(--red); }
+.gas-lbl   { color: var(--green); }
+
+/* E-brake removed */
+
+/* ══ 3. GEAR SELECTOR P N R D — I8, J8, K8 ══════════════════════ */
+/* I=40%, row8=58.33%, spans 3 cols (15%) × 1 row (8.33%) */
+.gear-bar {
+  position: fixed;
+  left: 40%;
+  top: 58.33%;
+  width: 15%;
+  height: 8.33%;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.4);
+  padding: 6px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+}
+.gear-letter {
+  width: 38px; height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-d);
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.gear-letter:hover { color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
+.gear-letter.active {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  text-shadow: 0 0 14px rgba(255,255,255,0.5);
+}
+.gear-letter[data-g="R"].active { color: var(--orange); text-shadow: 0 0 14px rgba(255,136,0,0.5); }
+.gear-letter[data-g="P"].active { color: var(--green); text-shadow: 0 0 14px rgba(0,255,136,0.5); }
+
+/* ══ 4. DOOR SIGN — G6 ══════════════════════════════════════════ */
+/* G=30%, row6=41.67% */
+.door-control {
+  position: fixed;
+  left: 32%;
+  top: 41.67%;
+  width: 5%;
+  height: 8.33%;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+.door-icon {
+  width: 32px; height: 32px;
+  object-fit: contain;
+  opacity: 0.3;
+  transition: all 0.3s;
+  filter: brightness(0) invert(1);
+}
+.door-control:hover .door-icon { opacity: 0.5; }
+.door-control.open .door-icon {
+  opacity: 1;
+  filter: none;
+}
+.door-label {
+  font-family: var(--ff-d);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--green);
+  transition: color 0.2s;
+}
+.door-control.open .door-label { color: var(--red); }
+
+/* ══ 5. SEATBELT SIGN — F6 ══════════════════════════════════════ */
+/* F=25%, row6=41.67% */
+.belt-control {
+  position: fixed;
+  left: 23%;
+  top: 41.67%;
+  width: 5%;
+  height: 8.33%;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+.belt-icon {
+  width: 32px; height: 32px;
+  object-fit: contain;
+  opacity: 0.4;
+  transition: all 0.3s;
+}
+.belt-control:hover .belt-icon { opacity: 0.6; }
+.belt-control.off .belt-icon {
+  opacity: 1;
+}
+.belt-label {
+  font-family: var(--ff-d);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--green);
+  transition: color 0.2s;
+}
+.belt-control.off .belt-label { color: var(--red); }
+
+/* ══ 6. MUSIC PLAYER — I5, J5, K5, I6, J6, K6 (3×2) ════════════ */
+/* I=40%, row5=33.33%, 3 cols (15%) × 2 rows (16.67%) */
+.music-player {
+  position: fixed;
+  left: 40%;
+  top: 33.33%;
+  width: 15%;
+  height: 16.67%;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+.mp-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.mp-play {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mp-play:hover { background: rgba(255,255,255,0.15); transform: scale(1.1); }
+.mp-play:active { transform: scale(0.9); }
+.mp-play svg { width: 12px; height: 12px; }
+
+.mp-info { flex: 1; overflow: hidden; }
+.mp-title {
+  font-family: var(--ff-d);
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.mp-progress {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.mp-bar { height: 100%; width: 30%; background: var(--cyan); border-radius: 3px; }
+
+.mp-viz {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.vbar {
+  display: block;
+  width: 2px; height: 3px;
+  background: var(--cyan);
+  border-radius: 1px;
+}
+.mp-viz.playing .vbar:nth-child(1) { animation: vb .7s  0s ease-in-out infinite alternate; }
+.mp-viz.playing .vbar:nth-child(2) { animation: vb .9s .1s ease-in-out infinite alternate; }
+.mp-viz.playing .vbar:nth-child(3) { animation: vb .65s .05s ease-in-out infinite alternate; }
+.mp-viz.playing .vbar:nth-child(4) { animation: vb .8s .15s ease-in-out infinite alternate; }
+.mp-viz.playing .vbar:nth-child(5) { animation: vb .75s .08s ease-in-out infinite alternate; }
+@keyframes vb { from{height:3px} to{height:14px; box-shadow:0 0 4px var(--cyan)} }
+
+.mp-vol {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80%; height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.12);
+  outline: none;
+  cursor: pointer;
+}
+.mp-vol::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+}
+
+/* ══ CAN STATUS — A12, B12, C12 (3×1) ═══════════════════════════ */
+/* A=0%, row12=91.67% */
+.can-strip {
+  position: fixed;
+  left: 0%;
+  top: 91.67%;
+  width: 15%;
+  height: 8.33%;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-family: var(--ff-m);
+  font-size: 9px;
+  color: var(--dim);
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+}
+.can-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 4px var(--red);
+  transition: all 0.4s;
+  flex-shrink: 0;
+}
+.can-dot.ok { background: var(--green); box-shadow: 0 0 5px var(--green); }
+
+.can-info-btn {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: var(--cyan);
+  font-family: var(--ff-d);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.can-info-btn:hover {
+  background: rgba(0,212,255,0.15);
+  border-color: var(--cyan);
+  transform: scale(1.15);
+}
+
+/* ══ CAN INFO POPUP ══════════════════════════════════════════════ */
+.can-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.can-popup-overlay.visible {
+  display: flex;
+}
+.can-popup {
+  width: 420px;
+  max-height: 80vh;
+  background: rgba(10,20,40,0.95);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 16px;
+  padding: 24px;
+  color: #fff;
+  font-family: var(--ff-u);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 30px rgba(0,212,255,0.1);
+}
+.can-popup h3 {
+  font-family: var(--ff-d);
+  font-size: 16px;
+  color: var(--cyan);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.can-popup table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.can-popup th {
+  text-align: left;
+  font-family: var(--ff-d);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(0,212,255,0.2);
+}
+.can-popup td {
+  padding: 5px 8px;
+  font-family: var(--ff-m);
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.can-popup-close {
+  position: absolute;
+  top: 12px; right: 16px;
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: 22px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.can-popup-close:hover { color: #fff; }
+
+/* ══ DEMO BANNER ═════════════════════════════════════════════════ */
+.demo-banner {
+  position: fixed;
+  bottom: 4px; left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 14px;
+  border-radius: 12px;
+  background: rgba(255,136,0,0.1);
+  border: 1px solid rgba(255,136,0,0.5);
+  color: var(--orange);
+  font-family: var(--ff-d);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  display: none;
+  z-index: 200;
+  backdrop-filter: blur(6px);
+  animation: dp 2.5s ease-in-out infinite;
+}
+@keyframes dp { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+/* ══ RESPONSIVE ══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .speed-val { font-size: 20px !important; }
+  .gear-letter { width: 30px; height: 30px; font-size: 14px; }
+  .steer-angle { font-size: 11px !important; }
+}
