@@ -12,6 +12,7 @@ import logging
 import os
 import ctypes
 import glob
+import json
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 
@@ -238,6 +239,62 @@ def cleanup_can():
         except: pass
 
     cleanup_serial()
+
+
+# ─── ADAS ALERT UDP RECEIVER ──────────────────────────────────────────────────
+ALERT_RECV_PORT = 20002
+
+_alert_state = {
+    'connected':     False,
+    'alert_text1':   '',
+    'alert_text2':   '',
+    'alert_status':  'none',
+    'bsm_left':      False,
+    'bsm_right':     False,
+    'fcw':           False,
+    'lead_detected': False,
+    'lead_distance': -1,
+    'speed_kph':     0,
+    'steering_angle': 0,
+    'enabled':       False,
+    'active':        False,
+}
+_alert_last_recv = 0.0
+_alert_lock = threading.Lock()
+
+def alert_udp_listener():
+    """Receive JSON alert packets from ADAS PC on UDP port 20002 and push to browser."""
+    global _alert_last_recv
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('0.0.0.0', ALERT_RECV_PORT))
+        sock.settimeout(1.0)
+        log.info(f"ADAS alert receiver listening on UDP:{ALERT_RECV_PORT}")
+    except Exception as e:
+        log.error(f"Alert receiver init failed: {e}")
+        return
+
+    while True:
+        try:
+            raw, addr = sock.recvfrom(4096)
+            payload = json.loads(raw.decode('utf-8'))
+            with _alert_lock:
+                _alert_state.update(payload)
+                _alert_state['connected'] = True
+                _alert_last_recv = time.time()
+            socketio.emit('adas_alert', dict(_alert_state))
+
+        except socket.timeout:
+            with _alert_lock:
+                if _alert_state['connected'] and (time.time() - _alert_last_recv) > 3.0:
+                    _alert_state['connected'] = False
+                    socketio.emit('adas_alert', {'connected': False})
+
+        except json.JSONDecodeError as e:
+            log.warning(f"Alert JSON parse error: {e}")
+        except Exception as e:
+            log.error(f"Alert receiver error: {e}")
 
 
 # ─── CAN MESSAGE BUILDERS ─────────────────────────────────────────────────────
@@ -542,6 +599,10 @@ if __name__ == '__main__':
 
     t = threading.Thread(target=sim_loop, daemon=True, name='SimLoop')
     t.start()
+
+    # ADAS alert receiver — forwards JSON packets from ADAS PC (port 20002) to browser
+    alert_thread = threading.Thread(target=alert_udp_listener, daemon=True, name='AlertRecv')
+    alert_thread.start()
 
     log.info("═══ ADAS Car Simulator ═══ http://0.0.0.0:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)

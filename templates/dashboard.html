@@ -16,6 +16,40 @@
   <img src="/static/cockpit_bg.png" alt="cockpit" class="cockpit-img" draggable="false"/>
 </div>
 
+<!-- ADAS ALERT PANEL -->
+<div class="adas-panel" id="adas-panel">
+  <div class="adas-header">
+    <span class="adas-title">ADAS</span>
+    <div class="adas-conn-wrap">
+      <span class="adas-conn-dot" id="adas-conn-dot"></span>
+      <span class="adas-conn-txt" id="adas-conn-txt">OFFLINE</span>
+    </div>
+  </div>
+
+  <div class="adas-alert-box" id="adas-alert-box">
+    <div class="adas-alert1" id="adas-alert1">STANDBY</div>
+    <div class="adas-alert2" id="adas-alert2"></div>
+  </div>
+
+  <div class="adas-bsm-row">
+    <div class="adas-bsm-ind" id="adas-bsm-left">&#9664; BSM</div>
+    <div class="adas-bsm-ind" id="adas-bsm-right">BSM &#9654;</div>
+  </div>
+
+  <div class="adas-row-item">
+    <span class="adas-row-lbl">FCW</span>
+    <span class="adas-row-val" id="adas-fcw-val">Clear</span>
+  </div>
+
+  <div class="adas-row-item">
+    <span class="adas-row-lbl">Lead</span>
+    <span class="adas-row-val" id="adas-lead-val">None</span>
+  </div>
+
+  <div class="adas-sys-status" id="adas-sys-status">STANDBY</div>
+</div>
+
+
 <!-- 9. BSM LEFT — B5 -->
 <div class="bsm bsm-left" id="bsm-left" onclick="toggleBSM('left')" title="BSM Left (3)">
   <div class="bsm-ring"></div>

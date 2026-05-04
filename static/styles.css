@@ -645,6 +645,152 @@ html, body {
 }
 @keyframes dp { 0%,100%{opacity:.6} 50%{opacity:1} }
 
+/* ══ ADAS ALERT PANEL ═══════════════════════════════════════════ */
+/* Positioned at top-left; stays above BSM (which starts at 33.33%) */
+.adas-panel {
+  position: fixed;
+  left: 0; top: 0;
+  width: 13%;
+  min-width: 128px;
+  z-index: 40;
+  background: rgba(8, 12, 28, 0.86);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-top: none; border-left: none;
+  border-radius: 0 0 14px 0;
+  backdrop-filter: blur(14px);
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.adas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,212,255,0.12);
+  padding-bottom: 5px;
+}
+.adas-title {
+  font-family: var(--ff-d);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0,212,255,0.4);
+}
+.adas-conn-wrap {
+  display: flex; align-items: center; gap: 4px;
+}
+.adas-conn-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 4px var(--red);
+  transition: all 0.4s;
+}
+.adas-conn-dot.ok {
+  background: var(--green);
+  box-shadow: 0 0 5px var(--green);
+}
+.adas-conn-txt {
+  font-family: var(--ff-m);
+  font-size: 8px;
+  color: var(--dim);
+}
+
+/* Alert text box */
+.adas-alert-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+  transition: background 0.3s, border-color 0.3s;
+}
+.adas-alert-box.critical {
+  background: rgba(255,23,68,0.12);
+  border-color: rgba(255,23,68,0.5);
+  animation: adas-crit 0.8s ease-in-out infinite;
+}
+@keyframes adas-crit {
+  0%,100% { box-shadow: none; }
+  50%      { box-shadow: 0 0 14px rgba(255,23,68,0.45); }
+}
+.adas-alert1 {
+  font-family: var(--ff-d);
+  font-size: clamp(9px, 1vw, 13px);
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  transition: color 0.3s;
+}
+.adas-alert2 {
+  font-family: var(--ff-m);
+  font-size: clamp(7px, 0.75vw, 10px);
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+  min-height: 12px;
+}
+
+/* BSM row */
+.adas-bsm-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 3px;
+}
+.adas-bsm-ind {
+  flex: 1;
+  text-align: center;
+  font-family: var(--ff-d);
+  font-size: clamp(6px, 0.65vw, 9px);
+  letter-spacing: 0.5px;
+  padding: 3px 2px;
+  border-radius: 5px;
+  border: 1px solid rgba(55,71,79,0.7);
+  color: #546e7a;
+  background: rgba(0,0,0,0.2);
+  transition: all 0.3s;
+}
+.adas-bsm-ind.active {
+  color: #ff9100;
+  border-color: rgba(255,145,0,0.55);
+  background: rgba(255,145,0,0.08);
+  box-shadow: 0 0 8px rgba(255,145,0,0.3);
+  animation: adas-bsm 1s ease-in-out infinite;
+}
+@keyframes adas-bsm {
+  0%,100% { box-shadow: 0 0 8px rgba(255,145,0,0.3); }
+  50%      { box-shadow: 0 0 16px rgba(255,145,0,0.6); }
+}
+
+/* FCW / Lead rows */
+.adas-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--ff-m);
+  font-size: clamp(7px, 0.75vw, 10px);
+}
+.adas-row-lbl { color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+.adas-row-val { color: var(--green); font-weight: bold; transition: color 0.3s; }
+.adas-row-val.warn { color: var(--red); }
+.adas-row-val.info { color: var(--cyan); }
+
+/* System status */
+.adas-sys-status {
+  text-align: center;
+  font-family: var(--ff-d);
+  font-size: clamp(6px, 0.65vw, 9px);
+  letter-spacing: 2px;
+  color: #546e7a;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 4px;
+  transition: color 0.3s;
+}
+.adas-sys-status.enabled { color: var(--amber); }
+.adas-sys-status.active  { color: var(--green); text-shadow: 0 0 8px rgba(0,255,136,0.4); }
+
 /* ══ SPEED LOCK BUTTON ═══════════════════════════════════════════ */
 /* Centred between left indicator (57%) and right indicator (73%) */
 .speed-lock-wrap {

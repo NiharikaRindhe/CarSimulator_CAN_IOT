@@ -623,6 +623,93 @@ socket.on('speed_lock_update', data => {
   syncSpeedLock(data.active, data.locked_speed ?? 0);
 });
 
+// ══════════════════════════════════════════════════════════════
+// ADAS ALERT PANEL — live warnings from the ADAS PC
+// ══════════════════════════════════════════════════════════════
+const STATUS_COLORS = {
+  none:           '#546e7a',
+  normal:         '#00ff88',
+  userPrompt:     '#ffcc00',
+  critical:       '#ff1744',
+  faultPermanent: '#ff6d00',
+};
+
+function updateAdasPanel(data) {
+  const connDot  = $('adas-conn-dot');
+  const connTxt  = $('adas-conn-txt');
+  const alertBox = $('adas-alert-box');
+  const alert1   = $('adas-alert1');
+  const alert2   = $('adas-alert2');
+  const bsmL     = $('adas-bsm-left');
+  const bsmR     = $('adas-bsm-right');
+  const fcwVal   = $('adas-fcw-val');
+  const leadVal  = $('adas-lead-val');
+  const sysSt    = $('adas-sys-status');
+
+  const connected = data.connected !== false;
+
+  // ── Connection indicator ──
+  if (connDot) connDot.classList.toggle('ok', connected);
+  if (connTxt) connTxt.textContent = connected ? 'LIVE' : 'OFFLINE';
+
+  if (!connected) {
+    if (alert1)   { alert1.textContent = 'NO SIGNAL'; alert1.style.color = '#546e7a'; }
+    if (alert2)   alert2.textContent = '';
+    if (alertBox) alertBox.classList.remove('critical');
+    return;
+  }
+
+  // ── Alert text ──
+  const text1  = data.alert_text1 || '';
+  const text2  = data.alert_text2 || '';
+  const status = (data.alert_status || 'none');
+  const isCrit = status.toLowerCase().includes('critical');
+
+  if (alert1) {
+    alert1.textContent  = text1 || 'No Alert';
+    alert1.style.color  = STATUS_COLORS[status] || STATUS_COLORS.none;
+  }
+  if (alert2)   alert2.textContent = text2;
+  if (alertBox) alertBox.classList.toggle('critical', isCrit);
+
+  // ── BSM ──
+  const bsmLeft  = data.bsm_left  || false;
+  const bsmRight = data.bsm_right || false;
+  if (bsmL) { bsmL.textContent = bsmLeft  ? '\u26a0 BSM L \u26a0' : '\u25c4 BSM'; bsmL.classList.toggle('active', bsmLeft);  }
+  if (bsmR) { bsmR.textContent = bsmRight ? '\u26a0 BSM R \u26a0' : 'BSM \u25ba'; bsmR.classList.toggle('active', bsmRight); }
+
+  // ── FCW ──
+  const fcw = data.fcw || false;
+  if (fcwVal) {
+    fcwVal.textContent = fcw ? 'BRAKE!' : 'Clear';
+    fcwVal.className   = 'adas-row-val' + (fcw ? ' warn' : '');
+  }
+
+  // ── Lead car ──
+  const lead     = data.lead_detected || false;
+  const leadDist = data.lead_distance || -1;
+  if (leadVal) {
+    if (lead && leadDist > 0) {
+      leadVal.textContent = leadDist + 'm';
+      leadVal.className   = 'adas-row-val info';
+    } else {
+      leadVal.textContent = 'None';
+      leadVal.className   = 'adas-row-val';
+    }
+  }
+
+  // ── System status ──
+  const active  = data.active  || false;
+  const enabled = data.enabled || false;
+  if (sysSt) {
+    if (active)       { sysSt.textContent = 'ACTIVE';  sysSt.className = 'adas-sys-status active'; }
+    else if (enabled) { sysSt.textContent = 'ENABLED'; sysSt.className = 'adas-sys-status enabled'; }
+    else              { sysSt.textContent = 'STANDBY'; sysSt.className = 'adas-sys-status'; }
+  }
+}
+
+socket.on('adas_alert', data => { updateAdasPanel(data); });
+
 function setCanStatus(type, ok) {
   if (type === 'can' || type === 'io') {
     state.canOk = ok;
