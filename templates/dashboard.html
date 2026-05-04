@@ -68,6 +68,21 @@
   <span id="steer-angle-text">+0.0°</span>
 </div>
 
+<!-- SPEED LOCK BUTTON -->
+<div class="speed-lock-wrap" id="speed-lock-wrap">
+  <button class="speed-lock-btn" id="speed-lock-btn" onclick="toggleSpeedLock()" title="Speed Lock (K)">
+    <svg class="sl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <span class="sl-label" id="sl-label">LOCK<br>SPEED</span>
+  </button>
+  <div class="sl-speed-badge" id="sl-speed-badge">
+    <span id="sl-locked-val">0</span>
+    <span class="sl-unit">km/h</span>
+  </div>
+</div>
+
 <!-- 2. ACCELERATOR BAR — N11, N12 -->
 <div class="pedal-wrapper accel-wrapper">
   <div class="pedal-box" id="gas-pedal" onmousedown="pedalDown('gas')" onmouseup="pedalUp('gas')" ontouchstart="pedalDown('gas')" ontouchend="pedalUp('gas')" title="Gas (W)">

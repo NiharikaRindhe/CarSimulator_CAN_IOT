@@ -13,14 +13,15 @@ socket.on('disconnect', () => setCanStatus('io', false));
 
 // ── State ─────────────────────────────────────────────────────
 let state = {
-  speed: 0, steerAngle: 0, gear: 3, /* D */ 
+  speed: 0, steerAngle: 0, gear: 3, /* D */
   throttle: false, brake: false, ebrake: false,
   headlights: false, highbeam: false,
   blinkerLeft: false, blinkerRight: false,
   doorOpen: false, seatbeltOn: true,
   bsmLeft: false, bsmRight: false,
   musicPlaying: false, volume: 0.5,
-  canOk: false, demo: false, mps: 0
+  canOk: false, demo: false, mps: 0,
+  speedLocked: false, lockedSpeed: 0
 };
 
 // ── DOM refs ──────────────────────────────────────────────────
@@ -260,6 +261,8 @@ function pedalDown(type) {
     state.brake = true;
     socket.emit('key_event', { key: 's', action: 'down' });
   } else {
+    // Block throttle when speed lock is active
+    if (state.speedLocked) return;
     state.throttle = true;
     socket.emit('key_event', { key: 'w', action: 'down' });
   }
@@ -442,6 +445,39 @@ function toggleBSM(side) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// SPEED LOCK — Click button or press K
+// ══════════════════════════════════════════════════════════════
+function toggleSpeedLock() {
+  const intendedActive = !state.speedLocked;
+
+  if (intendedActive) {
+    // Release any held throttle before locking so the server sees no throttle input
+    if (state.throttle) {
+      state.throttle = false;
+      socket.emit('key_event', { key: 'w', action: 'up' });
+      updatePedalBars();
+    }
+    // Send current speed — server will also use its own live value as the source of truth
+    socket.emit('set_speed_lock', { active: true, speed: state.speed });
+  } else {
+    socket.emit('set_speed_lock', { active: false, speed: 0 });
+  }
+}
+
+function syncSpeedLock(active, lockedSpeed) {
+  state.speedLocked = active;
+  state.lockedSpeed = lockedSpeed;
+
+  const btn   = $('speed-lock-btn');
+  const badge = $('sl-speed-badge');
+  const val   = $('sl-locked-val');
+
+  if (btn)   btn.classList.toggle('active', active);
+  if (badge) badge.classList.toggle('visible', active);
+  if (val)   val.textContent = lockedSpeed.toFixed(1);
+}
+
+// ══════════════════════════════════════════════════════════════
 // CAN INFO POPUP
 // ══════════════════════════════════════════════════════════════
 function toggleCanPopup() {
@@ -477,7 +513,10 @@ document.addEventListener('keydown', e => {
   if (e.repeat) return;
   const k = e.key.toLowerCase();
   switch (k) {
-    case 'w': case 'arrowup':    pedalDown('gas'); break;
+    case 'w': case 'arrowup':
+      // Block throttle when speed lock is active
+      if (!state.speedLocked) pedalDown('gas');
+      break;
     case 's': case 'arrowdown':  pedalDown('brake'); break;
     case 'a': case 'arrowleft':
       state.steerAngle = Math.max(-540, state.steerAngle - 15);
@@ -503,6 +542,7 @@ document.addEventListener('keydown', e => {
     case 'n': setGear(2); break;
     case 'r': setGear(1); break;
     case 'g': setGear(3); break;
+    case 'k': toggleSpeedLock(); break;
     case 'i': toggleCanPopup(); break;
     case 'escape':
       const overlay = $('can-popup-overlay');
@@ -573,6 +613,14 @@ socket.on('state_update', data => {
   if (data.left_blinker !== undefined && data.right_blinker !== undefined) {
     syncBlinkerState(data.left_blinker, data.right_blinker);
   }
+  if (data.speed_locked !== undefined) {
+    syncSpeedLock(data.speed_locked, data.locked_speed ?? 0);
+  }
+});
+
+// Dedicated speed-lock broadcast (fired by set_speed_lock handler)
+socket.on('speed_lock_update', data => {
+  syncSpeedLock(data.active, data.locked_speed ?? 0);
 });
 
 function setCanStatus(type, ok) {

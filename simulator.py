@@ -45,6 +45,8 @@ state = {
     'can_connected': False,
     'can_msgs_per_sec': 0,
     'can_demo_mode': True,
+    'speed_locked': False,  # Speed lock active flag
+    'locked_speed': 0.0,    # Target speed when lock is active
 }
 
 # Raw input flags from keyboard events
@@ -83,7 +85,7 @@ bridge_proc = None
 demo_mode = True
 
 # ─── ADAS PC WIFI UDP FORWARDING ─────────────────────────────────────────────
-ADAS_IP   = "192.168.0.13"   # IP address of the ADAS PC # - office 
+ADAS_IP   = "192.168.0.39"   # IP address of the ADAS PC # - office 
 ADAS_PORT = 20001              # UDP port the ADAS PC is listening on
 adas_sock = None               # Socket for WiFi forwarding
 
@@ -330,6 +332,15 @@ def physics_tick():
     if s['gear'] == 0:
         s['speed'] = 0.0
 
+    # ── Speed Lock — clamp speed to locked value ──────────────────
+    if s['speed_locked'] and not inp['emergency_brake']:
+        # Allow braking to override the lock but throttle is neutralised
+        if not inp['brake']:
+            s['speed'] = s['locked_speed']
+        else:
+            # Brake can still slow down below locked speed
+            s['speed'] = min(s['speed'], s['locked_speed'])
+
     # ── Steering ──────────
     if inp['steer_left']:
         s['steering_angle'] = max(-MAX_STEER, s['steering_angle'] - STEER_RATE)
@@ -409,6 +420,8 @@ def sim_loop():
                 'can_connected':   state['can_connected'],
                 'can_msgs_per_sec': state['can_msgs_per_sec'],
                 'can_demo_mode':   demo_mode,
+                'speed_locked':    state['speed_locked'],
+                'locked_speed':    round(state['locked_speed'], 1),
             })
 
         tick = (tick + 1) % 50
@@ -421,6 +434,28 @@ def sim_loop():
 def on_connect():
     log.info("Client connected")
     emit('state_update', {k: state[k] for k in state if k != 'emergency_brake'})
+
+@socketio.on('set_speed_lock')
+def on_speed_lock(data):
+    """Toggle or update the speed lock.
+    Payload: { active: bool, speed?: float }
+    """
+    active = bool(data.get('active', False))
+    state['speed_locked'] = active
+    if active:
+        # Always use live server-side speed as truth (avoids stale JS value).
+        # Minimum 1 km/h so locking at standstill doesn't freeze the car.
+        target = max(1.0, float(data.get('speed', state['speed'])))
+        target = min(MAX_SPEED, target)
+        state['locked_speed'] = target
+        log.info(f"Speed lock ON → {state['locked_speed']:.1f} km/h")
+    else:
+        log.info("Speed lock OFF")
+    # Use socketio.emit (not emit) so the originating client is included
+    socketio.emit('speed_lock_update', {
+        'active': state['speed_locked'],
+        'locked_speed': round(state['locked_speed'], 1)
+    })
 
 @socketio.on('disconnect')
 def on_disconnect():
